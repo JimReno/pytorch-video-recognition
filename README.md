@@ -90,7 +90,9 @@ After pre-processing, the output dir's structure is as follows:
   ```
 
 Note: HMDB dataset's directory tree is similar to UCF101 dataset's.
-
+## Transfer Learning
+Use your own datasets for transfer learning.
+use `clip.py` to clip video like ucf-101.
 ## Experiments
 These models were trained in machine with NVIDIA TITAN X 12gb GPU. Note that I splited
 train/val/test data for each dataset using sklearn. If you want to train models using
