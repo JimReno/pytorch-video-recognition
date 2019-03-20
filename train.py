@@ -23,14 +23,16 @@ resume_epoch = 0  # Default is 0, change if want to resume
 useTest = True # See evolution of the test set when training
 nTestInterval = 20 # Run on test set every nTestInterval epochs
 snapshot = 50 # Store a model every snapshot epochs
-lr = 1e-3 # Learning rate
+lr = 1e-5 # Learning rate
 
-dataset = 'ucf101' # Options: hmdb51 or ucf101
+dataset = 'video_cls' # Options: hmdb51 or ucf101
 
 if dataset == 'hmdb51':
     num_classes=51
 elif dataset == 'ucf101':
     num_classes = 101
+elif dataset == 'video_cls':
+    num_classes = 3
 else:
     print('We only implemented hmdb and ucf datasets.')
     raise NotImplementedError
@@ -58,7 +60,7 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
     """
 
     if modelName == 'C3D':
-        model = C3D_model.C3D(num_classes=num_classes, pretrained=True)
+        model = C3D_model.C3D(num_classes=num_classes, pretrained=False)
         train_params = [{'params': C3D_model.get_1x_lr_params(model), 'lr': lr},
                         {'params': C3D_model.get_10x_lr_params(model), 'lr': lr * 10}]
     elif modelName == 'R2Plus1D':
@@ -72,7 +74,8 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
         print('We only implemented C3D and R2Plus1D models.')
         raise NotImplementedError
     criterion = nn.CrossEntropyLoss()  # standard crossentropy loss for classification
-    optimizer = optim.SGD(train_params, lr=lr, momentum=0.9, weight_decay=5e-4)
+    optimizer = optim.Adam(train_params, lr=lr, weight_decay=5e-4)
+    # optimizer = optim.SGD(train_params, lr=lr, momentum=0.9, weight_decay=5e-4)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10,
                                           gamma=0.1)  # the scheduler divides the lr by 10 every 10 epochs
 
@@ -94,9 +97,9 @@ def train_model(dataset=dataset, save_dir=save_dir, num_classes=num_classes, lr=
     writer = SummaryWriter(log_dir=log_dir)
 
     print('Training model on {} dataset...'.format(dataset))
-    train_dataloader = DataLoader(VideoDataset(dataset=dataset, split='train',clip_len=16), batch_size=20, shuffle=True, num_workers=4)
-    val_dataloader   = DataLoader(VideoDataset(dataset=dataset, split='val',  clip_len=16), batch_size=20, num_workers=4)
-    test_dataloader  = DataLoader(VideoDataset(dataset=dataset, split='test', clip_len=16), batch_size=20, num_workers=4)
+    train_dataloader = DataLoader(VideoDataset(dataset=dataset, split='train', clip_len=16), batch_size=16, shuffle=True, num_workers=4)
+    val_dataloader   = DataLoader(VideoDataset(dataset=dataset, split='val',  clip_len=16), batch_size=16, num_workers=4)
+    test_dataloader  = DataLoader(VideoDataset(dataset=dataset, split='test', clip_len=16), batch_size=16, num_workers=4)
 
     trainval_loaders = {'train': train_dataloader, 'val': val_dataloader}
     trainval_sizes = {x: len(trainval_loaders[x].dataset) for x in ['train', 'val']}
